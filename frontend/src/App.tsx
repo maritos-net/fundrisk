@@ -9,7 +9,7 @@ function App() {
   return (
     <>
       <div>
-      <p>maritosのページにようこそ<p>
+      <p>maritosのページにようこそ</p>
       </div>
       <div>
         <a href="https://vite.dev" target="_blank">
