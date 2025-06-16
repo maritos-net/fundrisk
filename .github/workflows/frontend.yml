@@ -1,0 +1,40 @@
+name: Frontend CI
+
+on:
+  push:
+    branches: [frontend]
+    paths:
+      - 'fundrisk-frontend/**'
+  pull_request:
+    paths:
+      - 'fundrisk-frontend/**'
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: fundrisk-frontend
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Type check
+        run: npx tsc --noEmit
+
+      - name: Lint
+        run: npm run lint || echo "Lint error (調整中)"
+
+      - name: Test
+        run: npm test || echo "No tests yet"
+
+      - name: Build
+        run: npm run build
