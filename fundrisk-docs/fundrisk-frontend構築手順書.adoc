@@ -1,0 +1,117 @@
+= fundrisk-frontend 構築手順書（Ubuntu 22.04）
+:revdate: 2025-06-16
+:toc: left
+:icons: font
+
+== 概要
+
+[cols="2,4"]
+|===
+| 項目 | 内容
+
+| ホスト名 | fundrisk-frontend
+| IPアドレス | 192.168.1.130
+| OS | Ubuntu Server 22.04
+| フロントエンド | React + TypeScript（Vite）
+| 配信方法 | nginx による静的ファイル配信
+| 共存方式 | nginxデフォルトサイト + name-based virtual host
+|===
+
+== Step 1. 基本セットアップ
+
+[source, bash]
+----
+sudo apt update && sudo apt upgrade -y
+sudo apt install -y curl git build-essential
+----
+
+== Step 2. Node.js LTS のインストール
+
+[source, bash]
+----
+curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
+sudo apt install -y nodejs
+node -v && npm -v
+----
+
+== Step 3. React（Vite）プロジェクトの作成
+
+[source, bash]
+----
+sudo mkdir -p /opt/fundrisk/frontend
+sudo chown -R maritos:maritos /opt/fundrisk/frontend
+cd /opt/fundrisk/frontend
+
+npm create vite@latest . -- --template react-ts
+npm install
+
+# 開発用サーバ（任意）
+npm run dev
+----
+
+== Step 4. プロダクションビルド
+
+[source, bash]
+----
+npm run build
+# 出力: /opt/fundrisk/frontend/dist
+----
+
+== Step 5. nginx のセットアップ
+
+=== 5.1 nginx インストール
+
+[source, bash]
+----
+sudo apt install -y nginx
+----
+
+=== 5.2 ビルドファイルの配置
+
+[source, bash]
+----
+sudo mkdir -p /var/www/fundrisk-frontend
+sudo cp -r /opt/fundrisk/frontend/dist/* /var/www/fundrisk-frontend/
+----
+
+== Step 6. nginx サイト設定（名前ベース）
+
+=== 6.1 サイト設定ファイルの作成
+
+[source, bash]
+----
+sudo tee /etc/nginx/sites-available/fundrisk-frontend <<EOF
+server {
+    listen 80;
+    server_name fundrisk-frontend.local;
+
+    root /var/www/fundrisk-frontend;
+    index index.html;
+
+    location / {
+        try_files \$uri /index.html;
+    }
+}
+EOF
+----
+
+=== 6.2 サイトの有効化とリロード
+
+[source, bash]
+----
+sudo ln -s /etc/nginx/sites-available/fundrisk-frontend /etc/nginx/sites-enabled/
+sudo rm /etc/nginx/sites-enabled/default
+sudo nginx -t
+sudo systemctl reload nginx
+----
+
+
+== Step 7. ブラウザで確認
+
+ブラウザで以下にアクセス：
+
+----
+http://192.168.1.130
+----
+
+Reactアプリのトップ画面が表示されれば成功。
