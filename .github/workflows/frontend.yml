@@ -28,8 +28,9 @@ jobs:
           host: ${{ secrets.SERVER_IP }}
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
-          source: "frontend/dist/*"
+          source: "frontend/dist/"
           target: "/var/www/fundrisk-frontend"
+          strip_components: 2
 
       - name: Reload nginx
         uses: appleboy/ssh-action@v1.0.0
