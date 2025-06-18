@@ -1,15 +1,34 @@
-use axum::{
-    routing::get,
-    Router,
-};
+use reqwest::Client;
+use serde_json::Value;
 
+// asyncは非同期処理を行うことを示す。.awaitをつけることで実行するし、非同期処理の完了を待つ。
+// awaitをつけるのは処理を記述した段階では実行（メモリ確保含む）を行わず、処理自体を指すawaitがあってから実行されることを示す。
 #[tokio::main]
-async fn main() {
-    // build our application with a single route
-    let app = Router::new()
-        //.route("/実行パス", get(|| async { "コメント" }))
-        .route("/", get(|| async { "Hello, test" }));
-    // run our app with hyper, listening globally on port 3000
-    let listener = tokio::net::TcpListener::bind("0.0.0.0:3000").await.unwrap();
-    axum::serve(listener, app).await.unwrap();
+async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    let url = "https://query1.finance.yahoo.com/v8/finance/chart/AAPL?range=2mo&interval=1d";
+
+    // 現時点の理解としてはClientは架空のブラウザのようなもので、後述するユーザーエージェントのような性質を定義してHTTPリクエストを送信するためのもの
+    // https://docs.rs/reqwest/latest/reqwest/
+    let client = Client::new();
+    let res = client
+        .get(url)
+        .header("User-Agent", "Mozilla/5.0") 
+        .send()
+        .await?;
+
+    let status = res.status();
+    // status.is_successが200系のステータスコードを返すかどうかを確認するメソッド。
+    // 否定形にすることで、成功しなかった場合の処理を記述
+    // https://docs.rs/http/latest/http/status/struct.StatusCode.html
+    if !status.is_success() {
+        println!("Request failed with status: {}", status);
+        return Ok(());
+    }
+    // res.jsonは、その中にあるものをjsonとして解釈することを示す。
+    // https://developer.mozilla.org/ja/docs/Web/API/Response/json
+    let json: Value = res.json().await?;
+    // todoエラーハンドル実装する
+    println!("Pretty JSON:\n{}", serde_json::to_string_pretty(&json)?);
+
+    Ok(())
 }
