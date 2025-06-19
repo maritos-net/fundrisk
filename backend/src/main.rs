@@ -29,6 +29,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let json: Value = res.json().await?;
     // todoエラーハンドル実装する
     println!("Pretty JSON:\n{}", serde_json::to_string_pretty(&json)?);
+    // todoエラーハンドル実装する
 
     Ok(())
 }
