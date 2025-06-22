@@ -5,6 +5,8 @@ use axum::{
 use reqwest::Client;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
+use tower_http::cors::{CorsLayer, Any};
+
 // asyncは非同期処理を行うことを示す。.awaitをつけることで実行するし、非同期処理の完了を待つ。
 // awaitをつけるのは処理を記述した段階では実行（メモリ確保含む）を行わず、処理自体を指すawaitがあってから実行されることを示す。
 
@@ -26,12 +28,21 @@ struct FetchResponse {
 
 #[tokio::main]
 async fn main() {
+
+    let cors = CorsLayer::new()
+        .allow_origin(Any)    // Access-Control-Allow-Origin: *
+        .allow_methods(Any)   // Access-Control-Allow-Methods: *
+        .allow_headers(Any);  // Access-Control-Allow-Headers: *
+        // todo 本番構築前にアクセス制限をかける
+
     // /fetchというエンドポイントにPOSTリクエストを受け付ける
-    let app = Router::new().route("/fetch", post(fetch_handler));
+    let app = Router::new()
+        .route("/fetch", post(fetch_handler))
+        .layer(cors);
 
     // サーバ起動
     // https://docs.rs/axum-server/latest/axum_server/fn.bind.html
-    let addr = "127.0.0.1:3000".parse().unwrap();
+    let addr = "127.0.0.1:3001".parse().unwrap();
     println!("Listening on http://{}", addr);
     axum::Server::bind(&addr).
         serve(app.into_make_service())
